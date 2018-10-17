@@ -49,8 +49,10 @@
 
 #define UTEST(result,wanted) {if ( !iszero(result - wanted))\
                                     {\
-                                        printf("~Error in testing: in File: %s\n~In Line: %d\n~In Function: %s\n", __FILE__, __LINE__, __FUNCTION__)\
-                                        printf("~Test result " #result " = %f is not correct ( != %f)", result, wanted)\
+                                        printf("~Error in testing: in File: %s\n~In Line: %d\n~In Function: %s\n", __FILE__, __LINE__, __FUNCTION__);\
+                                        printf("~Test result " #result " = %f is not correct ( != %f)", result, wanted);\
+                                        DUMP (ErNum,stak)\
+                                        return 0;\
                                     }\
                             }
 
@@ -500,20 +502,18 @@ int test_stack(MyStack* stak)
     //
     //
     //Test error popping
-    for(double i = 2.01; i < 44.01; i = i + 1.0)
+    int counter = 0;
+    for(double i = 2.01; i < 12224; i = i + 1.111, counter++)
     {
+        printf("Testing stack: %.*s %.*s\r", counter * 55 / 22000, "||||||||||||||||||||||||||||||||||||||||||||||||||||||||", (22000 - counter) * 55 / 22000, "--------------------------------------------------------");
         stack_push((stak), 5.023 + i);
     }
 
-    for(double i = 43.01; i > 1.01; i = i - 1.0)
-        {
-            if ( !iszero((stack_pop(stak))-(5.023 + i)))
-                {
-                    printf("~In %s, line %d, function: %s\n   ~Error in pushing and popping in %.0f element tested: stack_pop() != %f\n", __FILE__, __LINE__,__FUNCTION__, (i - 2.01 + 1),5.023 + i);
-                    DUMP (ErNum,stak)
-                    ErNum = 0;
-                    return 0;
-                }
-        }
+    for(double i = 12223.01; i >= 2.01; i = i - 1.111, counter++)
+    {
+        printf("Testing stack: %.*s %.*s\r", counter * 55 / 22000, "||||||||||||||||||||||||||||||||||||||||||||||||||||||||", (22000 - counter) * 55 / 22000, "--------------------------------------------------------");
+        UTEST(stack_pop(stak),(5.023 + i))
+    }
+    printf("\n");
     return 1;
 }
