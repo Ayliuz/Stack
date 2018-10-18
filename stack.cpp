@@ -21,8 +21,8 @@
                                 { \
                                     printf("      data[%d] = %f\n~", i, (stack)->data[i]);\
                                 } \
-                                printf("   hash = %f\n~", make_hash (stack));\
-                                printf("   StackHash = %f\n~", (stack)->StackHash);\
+                                printf("   hash = %g\n~", make_hash (stack));\
+                                printf("   StackHash = %g\n~", (stack)->StackHash);\
                                 printf("   INFO: \n~");\
                                 switch (ErNum)\
                                 { \
@@ -202,7 +202,7 @@ void stack_Clear(MyStack* s)
 void stack_push(MyStack* s, stack_type val)
 {
     assert(s);
-    if ( !stack_is_OK(s)) DUMP(ErNum,s);
+    if ( !stack_is_OK(s)) {DUMP(ErNum,s); abort();}
 
     if (s->StackSize + 1 < s->StackCapacity)
     {
@@ -216,7 +216,7 @@ void stack_push(MyStack* s, stack_type val)
         s->StackSize ++;
     }
     s->StackHash = make_hash(s);
-    if ( !stack_is_OK(s)) DUMP(ErNum,s);
+    if ( !stack_is_OK(s)) {DUMP(ErNum,s); abort();}
 }
 
 //************************************
@@ -250,7 +250,7 @@ stack_type stack_pop(MyStack* s)
     }
 
     s->StackHash = make_hash(s);
-    if ( !stack_is_OK(s)) DUMP(ErNum,s);
+    if ( !stack_is_OK(s)) {DUMP(ErNum,s); abort();}
     return buf;
 
 }
@@ -306,8 +306,8 @@ stack_type make_hash (MyStack* s)
     stack_type hashSum = 0;
     for (unsigned int i=0; i < s->StackSize; ++i)
     {
-        hashSum = 2.5 * hashSum + s->data[i];
-        hashSum = hashSum / 10;
+        hashSum = 22222.5 * hashSum  + (s->data[i]) * (s->data[i]);
+        hashSum = hashSum / 22222;
     }
     return hashSum;
 }
@@ -327,7 +327,7 @@ int stack_is_OK(MyStack* s)
     assert(s);
     int not_error = 1;
 
-    if ( !iszero(make_hash(s) - (s->StackHash))){                                                                                                                       ErNum = ERRORDATA; not_error = 0;}
+    if ( !(s->data) || !iszero(make_hash(s) - (s->StackHash))){                                                                                                         ErNum = ERRORDATA; not_error = 0;}
     if ( !isfinite(s->StackCapacity) || ((s->StackCapacity) < StartCapacity) || (((s->StackCapacity) % StartCapacity) != 0) || ((s->StackSize) > (s->StackCapacity))){  ErNum = ERRORCAP;  not_error = 0;}
     if ( !isfinite(s->StackSize) || (((s->StackSize) > (s->StackCapacity)) && !isfinite(s->data[s->StackSize-1])) || isfinite(s->data[s->StackSize])) {                 ErNum = ERRORSIZE; not_error = 0;}
 
