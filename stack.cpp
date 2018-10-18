@@ -11,6 +11,7 @@
 #define ERRORCAP 2
 #define ERRORSIZE 3
 #define ERRORPOP 4
+#define ERRORMEM 5
 
 #define $(x) std::cout<<"~"<<#x " = "<<x<<"\n";
 #define DUMP(ERRNUMBER,stack) { printf("~In File: %s\n~In Line: %d\n~In Function: %s\n", __FILE__, __LINE__, __FUNCTION__); \
@@ -40,6 +41,9 @@
                                         break;\
                                     case ERRORPOP:\
                                         printf("      Can't pop from the stack");\
+                                        break;\
+                                    case ERRORMEM:\
+                                        printf("      Memory was damaged");\
                                         break;\
                                     default:\
                                         printf("      Stack is OK\n~");\
@@ -84,6 +88,7 @@ int test_stack(MyStack*);
 int test_error_size(MyStack*);
 int test_error_capacity(MyStack*);
 int test_error_data(MyStack*);
+int test_error_memory(MyStack*);
 
 int main()
 {
@@ -125,7 +130,7 @@ void stack_Ctor(MyStack* s)
 {
     assert(s);
 
-    s->data = (stack_type*) calloc(10, sizeof(stack_type));
+    s->data = (stack_type*) calloc(StartCapacity, sizeof(stack_type));
 
     s->StackSize = 0;
     s->StackCapacity = StartCapacity;
@@ -239,7 +244,7 @@ stack_type stack_pop(MyStack* s)
         return NAN;
     }
 
-    if ( !stack_is_OK(s)) DUMP(ErNum,s);
+    if ( !stack_is_OK(s)) {DUMP(ErNum,s); abort();}
 
     stack_type buf = s->data[--(s->StackSize)];
     s->data[(s->StackSize)] = NAN;
@@ -326,6 +331,16 @@ int stack_is_OK(MyStack* s)
 {
     assert(s);
     int not_error = 1;
+
+    for (int i = s->StackSize + 1; i < s->StackCapacity; i++ )
+    {
+        if ( isfinite(s->data[i]))
+        {
+            ErNum = ERRORMEM;
+            not_error = 0;
+            break;
+        }
+    }
 
     if ( !(s->data) || !iszero(make_hash(s) - (s->StackHash))){                                                                                                         ErNum = ERRORDATA; not_error = 0;}
     if ( !isfinite(s->StackCapacity) || ((s->StackCapacity) < StartCapacity) || (((s->StackCapacity) % StartCapacity) != 0) || ((s->StackSize) > (s->StackCapacity))){  ErNum = ERRORCAP;  not_error = 0;}
@@ -469,6 +484,42 @@ int test_error_data(MyStack* stak)
     if ((stack_is_OK(&s) != 0) || (ErNum != ERRORDATA))
         {
             printf("~In %s, line %d, function: %s\n   ~Error in stack_is_OK(with error in data), error code = %d\n", __FILE__, __LINE__,__FUNCTION__, ErNum);
+            DUMP (ErNum,&s)
+            ErNum = 0;
+            return 0;
+        }
+    ErNum = 0;
+
+    stack_Dtor(&s);
+
+    return 1;
+}
+
+//************************************
+/// Tests stack_is_OK in case of memory
+///
+/// Parameters: [in] struct MyStack* s - pointer to MyStack structure\n
+///
+/// Output: 1 if test was passed, 0 if not and calls for DUMP
+///
+//************************************
+
+int test_error_memory(MyStack* stak)
+{
+    assert(stak);
+    MyStack s = *stak;
+    stack_Ctor(&s);
+
+
+    for(double i = 2.01; i < 44.01; i = i + 1.0)
+    {
+        stack_push((&s), 5.023 + i);
+    }
+
+    (&s)->data[s.StackCapacity - 2] = 90;
+    if ((stack_is_OK(&s) != 0) || (ErNum != ERRORMEM))
+        {
+            printf("~In %s, line %d, function: %s\n   ~Error in stack_is_OK(with error in memory), error code = %d\n", __FILE__, __LINE__,__FUNCTION__, ErNum);
             DUMP (ErNum,&s)
             ErNum = 0;
             return 0;
