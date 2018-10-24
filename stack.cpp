@@ -36,10 +36,10 @@
                                 printf("   In memory StackHash = %i\n~",          (stack)->StackHash_stack);\
                                 int StackHashBuf = (stack)->StackHash_stack;\
                                 (stack)->StackHash_stack = HASHDEFAULT;\
-                                printf("       Real stack_hash = %i\n~",         make_Stack_hash(stack));\
+                                printf("       Real stack_hash = %i\n~",         hash ((stack), sizeof (*(stack))));\
                                 (stack)->StackHash_stack = StackHashBuf;\
                                 printf("   In memory DataHash  = %i\n~",           (stack)->StackHash_data);\
-                                printf("       Real data_hash  = %i\n~",          make_data_hash(stack));\
+                                printf("       Real data_hash  = %i\n~",          hash((stack)->data, (stack)->StackCapacity * sizeof(stack_type)));\
                                 printf("   Struct_guard_begin  = %s\n~", (((stack)->stack_guard_begin) == GUARD) ? "GUARD": "ERROR");\
                                 printf("   Struct_guard_end    = %s\n~",   (((stack)->stack_guard_end) == GUARD) ? "GUARD": "ERROR");\
                                 printf("   Data_guard_begin    = %s\n~", iszero(*((stack)->data_guard_begin) - GUARD) ? "GUARD": "ERROR");\
@@ -130,8 +130,7 @@ stack_type stack_pop(MyStack*);
 void stack_extend (MyStack*);
 void stack_contract (MyStack*);
 void make_hash (MyStack*);
-int make_Stack_hash (const MyStack*);
-int make_data_hash (const MyStack*);
+int hash (void*, unsigned int);
 int stack_is_OK(MyStack*);
 int test_stack(MyStack*);
 int test_error_size(const MyStack*);
@@ -412,36 +411,13 @@ void make_hash (MyStack* s)
 {
     assert(s);
 
-    s->StackHash_data = make_data_hash(s);
+    s->StackHash_data = hash (s->data, s->StackCapacity * sizeof (stack_type));
     s->StackHash_stack = HASHDEFAULT;
-    s->StackHash_stack = make_Stack_hash(s);
+    s->StackHash_stack = hash (s, sizeof (*s));
 }
 
 //************************************
-/// Hashes the structure of the stack.
-///
-/// Parameters: [in] struct MyStack* s - pointer to MyStack structure
-///
-/// Output: changes StackHash_stack in stack.
-///
-//************************************
-
-int make_Stack_hash (const MyStack* s)
-{
-    assert(s);
-
-    int hashSum = 1;
-    for (char* p = (char*) s; p < (char*) s + sizeof(MyStack); p++)
-    {
-        hashSum = 22220 * hashSum  + abs(int(*p));
-        hashSum = hashSum % 20002;
-    }
-
-    return hashSum;
-}
-
-//************************************
-/// Hashes the array in the stack.
+/// Hashes memory pointed by given pointer.
 ///
 /// Parameters: [in] struct MyStack* s - pointer to MyStack structure
 ///
@@ -449,12 +425,12 @@ int make_Stack_hash (const MyStack* s)
 ///
 //************************************
 
-int make_data_hash (const MyStack* s)
+int hash (void* s, unsigned int size)
 {
     assert(s);
 
     int hashSum = 0;
-    for (char* p = (char*) s->data; p < (char*) (s->data + s->StackCapacity); p++)
+    for (char* p = (char*) s; p < (char*)(s + size); p++)
     {
         hashSum = 22222 * hashSum  + abs(int(*p));
         hashSum = hashSum % 20002;
@@ -491,13 +467,13 @@ int stack_is_OK(MyStack* s)
         }
     }
 
-    if ( !iszero(make_data_hash(s) - (s->StackHash_data))){                                                                                                             ErNum = ERRORDATA;      not_error = 0; }
+    if ( !iszero(hash(s->data, sizeof(stack_type) * (s->StackCapacity)) - (s->StackHash_data))){                                                                                                             ErNum = ERRORDATA;      not_error = 0; }
 
     if ( !iszero(*(s->data_guard_begin) - GUARD) || !iszero(*(s->data_guard_end) - GUARD)){                                                                             ErNum = ERRORMEMORY;    not_error = 0;}
 
     int StackHashBuf = s->StackHash_stack;
     s->StackHash_stack = HASHDEFAULT;
-    if ( !iszero(make_Stack_hash(s) - StackHashBuf) || ((s->stack_guard_begin) != GUARD) || ((s->stack_guard_end != GUARD))){                                           ErNum = ERRORSTRUCT;    not_error = 0;}
+    if ( !iszero(hash(s, sizeof(*s)) - StackHashBuf) || ((s->stack_guard_begin) != GUARD) || ((s->stack_guard_end != GUARD))){                                           ErNum = ERRORSTRUCT;    not_error = 0;}
     s->StackHash_stack = StackHashBuf;
 
     if ( !isfinite(s->StackCapacity) || ((s->StackCapacity) < StartCapacity) || (((s->StackCapacity) % StartCapacity) != 0) || ((s->StackSize) > (s->StackCapacity))){  ErNum = ERRORCAPACITY;  not_error = 0;}
